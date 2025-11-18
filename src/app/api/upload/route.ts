@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth';
 import { query } from '@/lib/db';
-import { put } from '@vercel/blob';
+import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -24,6 +24,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Not authenticated' }, { status: 401 });
     }
 
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_ANON_KEY!
+    );
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -39,17 +44,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'File type not allowed' }, { status: 400 });
     }
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${uuidv4()}.${fileExt}`;
-
-    // Upload directly to Vercel Blob
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const { url } = await put(`uploads/${fileName}`, buffer, {
-      access: 'public',
-      contentType: file.type
-    });
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExt}`;
+
+    // Upload to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from(process.env.SUPABASE_BUCKET!)
+      .upload(`uploads/${fileName}`, buffer, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error(uploadError);
+      return NextResponse.json({ success: false, message: 'Upload failed' }, { status: 500 });
+    }
+
+    // Get public URL
+    const { data } = supabase.storage
+      .from(process.env.SUPABASE_BUCKET!)
+      .getPublicUrl(`uploads/${fileName}`);
+
+    const publicUrl = data.publicUrl;
 
     const result = await query(
       `
@@ -57,7 +76,7 @@ export async function POST(request: NextRequest) {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
       `,
-      [user.id, fileName, file.name, file.size, file.type, url]
+      [user.id, fileName, file.name, file.size, file.type, publicUrl]
     );
 
     const document = result.rows[0];
@@ -66,8 +85,8 @@ export async function POST(request: NextRequest) {
       success: true,
       document: {
         ...document,
-        file_path: url
-      }
+        file_path: publicUrl,
+      },
     });
   } catch (error) {
     console.error('Upload error:', error);
