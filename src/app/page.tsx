@@ -5,7 +5,7 @@ import { FileText, Shield, Upload, Users } from 'lucide-react';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-200 to-indigo-200">
       <header className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -45,7 +45,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
-          <Card>
+          <Card className='border-3 border-black !border !border-black'>
             <CardHeader>
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Upload className="h-6 w-6 text-primary" />
@@ -134,9 +134,9 @@ export default function HomePage() {
         </div>
       </main>
 
-      <footer className="container mx-auto px-4 py-8 mt-16 border-t">
+      <footer className="container mx-auto px-4 py-8 mt-16 border-t-black">
         <p className="text-center text-muted-foreground">
-          © 2024 DocuSafe. Built with Next.js, TypeScript, and PostgreSQL.
+          © 2025 DocuSafe.
         </p>
       </footer>
     </div>
