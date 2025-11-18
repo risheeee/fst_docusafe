@@ -31,6 +31,7 @@
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.3",
     "@types/uuid": "^10.0.0",
+    "@vercel/blob": "^2.0.0",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
